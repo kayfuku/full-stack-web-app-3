@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, flash
 from sqlalchemy import exc
 import json
 from flask_cors import CORS
@@ -96,6 +96,50 @@ def get_drinks_detail():
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks', methods=['POST'])
+@requires_auth('post:drinks')
+def create_drink():
+    body = request.get_json()
+    if body is None:
+        raise AuthError({
+            'code': 'invalid_request',
+            'description': 'Unable to find a request body.'
+        }, 400)
+
+    try:
+        new_question = body.get('question', None)
+        new_answer = body.get('answer', None)
+        new_category = body.get('category', None)
+        new_difficulty = body.get('difficulty', None)
+        search_term = body.get('search_term', None)
+        if new_difficulty:
+            new_difficulty = int(new_difficulty)
+        question = Question(
+            question=new_question,
+            answer=new_answer,
+            category=new_category,
+            difficulty=new_difficulty
+        )
+        question.insert()
+
+        selection = Question.query.order_by(Question.id).all()
+        current_questions = [
+            question.format()
+            for question in paginate_questions(request, selection)]
+
+        return jsonify({
+            'success': True,
+            'created': question.id,
+            'questions': current_questions,
+            'total_questions': len(Question.query.all())
+        })
+
+    except Exception as ex:
+        flash('An error occurred. New question could not be created.')
+        db.session.rollback()
+        abort(422)
 
 
 '''
