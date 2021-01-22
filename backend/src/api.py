@@ -73,11 +73,11 @@ def get_drinks():
 @requires_auth('get:drinks-detail')
 def get_drinks_detail():
     drinks = Drink.query.order_by(Drink.id).all()
-    if len(drinks) == 0:
-        raise AuthError({
-            'code': 'resource_not_found',
-            'description': 'Resource not found.'
-        }, 404)
+    # if len(drinks) == 0:
+    #     raise AuthError({
+    #         'code': 'resource_not_found',
+    #         'description': 'Resource not found.'
+    #     }, 404)
 
     formatted_drinks = [drink.long() for drink in drinks]
 
