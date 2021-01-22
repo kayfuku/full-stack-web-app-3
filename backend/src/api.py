@@ -9,7 +9,20 @@ from .auth.auth import AuthError, requires_auth
 
 app = Flask(__name__)
 setup_db(app)
-CORS(app)
+CORS(app, resources={r"*": {'origins': r"*"}})
+
+# CORS Headers
+
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origions', '*')  # ?
+    response.headers.add('Access-Control-Allow-Headers',
+                         'Content-Type, Authorization, true')
+    response.headers.add('Access-Control-Allow-Methods',
+                         'GET, POST, PATCH, DELETE, OPTIONS')
+    return response
+
 
 '''
 @TODO uncomment the following line to initialize the datbase
@@ -54,6 +67,24 @@ def get_drinks():
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks-detail', methods=['GET'])
+@requires_auth('get:drinks-detail')
+def get_drinks_detail():
+    drinks = Drink.query.order_by(Drink.id).all()
+    if len(drinks) == 0:
+        raise AuthError({
+            'code': 'resource_not_found',
+            'description': 'Resource not found.'
+        }, 404)
+
+    formatted_drinks = [drink.long() for drink in drinks]
+
+    return jsonify({
+        'success': True,
+        'drinks': formatted_drinks
+    })
 
 
 '''
