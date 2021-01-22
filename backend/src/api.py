@@ -45,11 +45,11 @@ def after_request(response):
 @app.route('/drinks', methods=['GET'])
 def get_drinks():
     drinks = Drink.query.order_by(Drink.id).all()
-    if len(drinks) == 0:
-        raise AuthError({
-            'code': 'resource_not_found',
-            'description': 'Resource not found.'
-        }, 404)
+    # if len(drinks) == 0:
+    #     raise AuthError({
+    #         'code': 'resource_not_found',
+    #         'description': 'Resource not found.'
+    #     }, 404)
 
     formatted_drinks = [drink.short() for drink in drinks]
 
