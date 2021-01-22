@@ -30,11 +30,13 @@ CORS(app)
 
 
 @app.route('/drinks', methods=['GET'])
-@requires_auth('get:drinks')
 def get_drinks():
     drinks = Drink.query.order_by(Drink.id).all()
     if len(drinks) == 0:
-        abort(404)
+        raise AuthError({
+            'code': 'resource_not_found',
+            'description': 'Resource not found.'
+        }, 404)
 
     formatted_drinks = [drink.short() for drink in drinks]
 
