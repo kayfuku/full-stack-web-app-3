@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request, jsonify, abort, flash
+import traceback
 from sqlalchemy import exc
 import json
 from flask_cors import CORS
@@ -143,7 +144,7 @@ def create_drink(jwt):
 
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
-def update_drinks(jwt, drink_id):
+def update_drink(jwt, drink_id):
     print('drink_id:', drink_id)
     body = request.get_json()
 
@@ -151,7 +152,7 @@ def update_drinks(jwt, drink_id):
     if drink is None:
         return jsonify({
             'success': False,
-            'error': 'Drink id: ' + drink_id + ' not found to be edited'
+            'error': 'Drink id ' + drink_id + ' not found to be edited.'
         }), 404
 
     else:
@@ -170,7 +171,7 @@ def update_drinks(jwt, drink_id):
             })
 
         except Exception as ex:
-            flash('An error occurred. Drink id: ' + drink_id +
+            flash('An error occurred. Drink id ' + drink_id +
                   ' could not be updated.')
             db.session.rollback()
             abort(422)
@@ -186,6 +187,34 @@ def update_drinks(jwt, drink_id):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks/<int:drink_id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drink(jwt, drink_id):
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+    if drink is None:
+        return jsonify({
+            'success': False,
+            'error': 'Drink id ' + drink_id + ' not found to be deleted.'
+        }), 404
+
+    else:
+        try:
+            drink.delete()
+
+            return jsonify({
+                'success': True,
+                'id': drink_id
+            })
+
+        except Exception as ex:
+            flash(
+                'An error occurred. Drink id ' + drink_id +
+                ' could not be deleted.')
+            db.session.rollback()
+            traceback.print_exc()
+            abort(422)
 
 
 # Error Handling
