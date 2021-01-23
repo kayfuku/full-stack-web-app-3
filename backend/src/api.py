@@ -100,7 +100,6 @@ def get_drinks_detail(jwt):
 @requires_auth('post:drinks')
 def create_drink(jwt):
     body = request.get_json()
-    # print('body:', body)
 
     if body is None:
         abort(400)
@@ -108,10 +107,6 @@ def create_drink(jwt):
     try:
         new_title = body.get('title', None)
         new_recipe = body.get('recipe', None)
-        # print('new_title:', new_title)
-        # print(type(new_recipe))
-        # print('new_recipe:', str(new_recipe))
-        # print(type(json.dumps(new_recipe)))
 
         # Make sure that the user entered both the title and the recipe.
         if new_title is None or new_recipe is None:
@@ -150,7 +145,6 @@ def create_drink(jwt):
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
 def update_drink(jwt, drink_id):
-    print('drink_id:', drink_id)
     body = request.get_json()
 
     drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
