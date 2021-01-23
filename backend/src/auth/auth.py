@@ -118,10 +118,10 @@ def check_permissions(permission, payload):
 
 
 def verify_decode_jwt(token):
-    # Get public key of the auth server.
+    # get the public key of the auth server
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
-    # Get jwt from user.
+    # decode the payload from the token
     unverified_header = jwt.get_unverified_header(token)
 
     rsa_key = {}
@@ -131,6 +131,7 @@ def verify_decode_jwt(token):
             'description': 'Authorization malformed.'
         }, 401)
 
+    # if key id match, then build the RSA key
     for key in jwks['keys']:
         if key['kid'] == unverified_header['kid']:
             rsa_key = {
@@ -153,19 +154,22 @@ def verify_decode_jwt(token):
 
             return payload
 
-        except jwt.ExpiredSignatureError:
+        except jwt.ExpiredSignatureError as ex:
+            print(ex)
             raise AuthError({
                 'code': 'token_expired',
                 'description': 'Token expired.'
             }, 401)
 
-        except jwt.JWTClaimsError:
+        except jwt.JWTClaimsError as ex:
+            print(ex)
             raise AuthError({
                 'code': 'invalid_claims',
                 'description': 'Incorrect claims. Please, check the audience and issuer.'
             }, 401)
 
-        except Exception:
+        except Exception as ex:
+            print(ex)
             raise AuthError({
                 'code': 'invalid_header',
                 'description': 'Unable to parse authentication token.'

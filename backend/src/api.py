@@ -46,10 +46,7 @@ def after_request(response):
 def get_drinks():
     drinks = Drink.query.order_by(Drink.id).all()
     # if len(drinks) == 0:
-    #     raise AuthError({
-    #         'code': 'resource_not_found',
-    #         'description': 'Resource not found.'
-    #     }, 404)
+    #     abort(404)
 
     formatted_drinks = [drink.short() for drink in drinks]
 
@@ -74,10 +71,7 @@ def get_drinks():
 def get_drinks_detail(jwt):
     drinks = Drink.query.order_by(Drink.id).all()
     # if len(drinks) == 0:
-    #     raise AuthError({
-    #         'code': 'resource_not_found',
-    #         'description': 'Resource not found.'
-    #     }, 404)
+    #     abort(404)
 
     formatted_drinks = [drink.long() for drink in drinks]
 
@@ -105,10 +99,7 @@ def create_drink(jwt):
     print('body:', body)
 
     if body is None:
-        raise AuthError({
-            'code': 'invalid_request',
-            'description': 'Unable to find a request body.'
-        }, 400)
+        abort(400)
 
     try:
         new_title = body.get('title', None)
@@ -120,10 +111,7 @@ def create_drink(jwt):
 
         # Make sure that the user entered both the title and the recipe.
         if new_title is None or new_recipe is None:
-            raise AuthError({
-                'code': 'invalid_request',
-                'description': 'Both title and recipe needed.'
-            }, 400)
+            abort(400)
 
         # Convert list to string.
         new_drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
@@ -151,6 +139,41 @@ def create_drink(jwt):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks/<int:drink_id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def update_drinks(jwt, drink_id):
+    print('drink_id:', drink_id)
+    body = request.get_json()
+
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+    if drink is None:
+        return jsonify({
+            'success': False,
+            'error': 'Drink id: ' + drink_id + ' not found to be edited'
+        }), 404
+
+    else:
+        try:
+            new_title = body.get('title', None)
+            new_recipe = body.get('recipe', None)
+
+            drink.title = new_title or drink.title
+            drink.recipe = json.dumps(new_recipe) or drink.recipe
+
+            drink.update()
+
+            return jsonify({
+                'success': True,
+                'drinks': [drink.long()]
+            })
+
+        except Exception as ex:
+            flash('An error occurred. Drink id: ' + drink_id +
+                  ' could not be updated.')
+            db.session.rollback()
+            abort(422)
 
 
 '''
