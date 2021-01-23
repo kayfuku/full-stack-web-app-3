@@ -4,7 +4,7 @@ from sqlalchemy import exc
 import json
 from flask_cors import CORS
 
-from .database.models import db_drop_and_create_all, setup_db, Drink
+from .database.models import db, db_drop_and_create_all, setup_db, Drink
 from .auth.auth import AuthError, requires_auth
 
 app = Flask(__name__)
@@ -71,7 +71,7 @@ def get_drinks():
 
 @app.route('/drinks-detail', methods=['GET'])
 @requires_auth('get:drinks-detail')
-def get_drinks_detail():
+def get_drinks_detail(jwt):
     drinks = Drink.query.order_by(Drink.id).all()
     # if len(drinks) == 0:
     #     raise AuthError({
@@ -100,8 +100,10 @@ def get_drinks_detail():
 
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
-def create_drink():
+def create_drink(jwt):
     body = request.get_json()
+    print('body:', body)
+
     if body is None:
         raise AuthError({
             'code': 'invalid_request',
@@ -109,36 +111,31 @@ def create_drink():
         }, 400)
 
     try:
-        # TODO
-        new_question = body.get('question', None)
-        new_answer = body.get('answer', None)
-        new_category = body.get('category', None)
-        new_difficulty = body.get('difficulty', None)
-        search_term = body.get('search_term', None)
-        if new_difficulty:
-            new_difficulty = int(new_difficulty)
-        question = Question(
-            question=new_question,
-            answer=new_answer,
-            category=new_category,
-            difficulty=new_difficulty
-        )
-        question.insert()
+        new_title = body.get('title', None)
+        new_recipe = body.get('recipe', None)
+        # print('new_title:', new_title)
+        # print(type(new_recipe))
+        # print('new_recipe:', str(new_recipe))
+        # print(type(json.dumps(new_recipe)))
 
-        selection = Question.query.order_by(Question.id).all()
-        current_questions = [
-            question.format()
-            for question in paginate_questions(request, selection)]
+        # Make sure that the user entered both the title and the recipe.
+        if new_title is None or new_recipe is None:
+            raise AuthError({
+                'code': 'invalid_request',
+                'description': 'Both title and recipe needed.'
+            }, 400)
+
+        # Convert list to string.
+        new_drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
+        new_drink.insert()
 
         return jsonify({
             'success': True,
-            'created': question.id,
-            'questions': current_questions,
-            'total_questions': len(Question.query.all())
+            'drinks': [new_drink.long()]
         })
 
     except Exception as ex:
-        flash('An error occurred. New question could not be created.')
+        flash('An error occurred. New drink could not be created.')
         db.session.rollback()
         abort(422)
 

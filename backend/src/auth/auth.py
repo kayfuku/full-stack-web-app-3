@@ -5,9 +5,9 @@ from jose import jwt
 from urllib.request import urlopen
 
 
-AUTH0_DOMAIN = 'udacity-fsnd.auth0.com'
+AUTH0_DOMAIN = 'fsnd-iam-dev.us.auth0.com'
 ALGORITHMS = ['RS256']
-API_AUDIENCE = 'dev'
+API_AUDIENCE = 'coffeeshop'
 
 # AuthError Exception
 '''
@@ -194,9 +194,12 @@ def requires_auth(permission=''):
         @wraps(f)
         def wrapper(*args, **kwargs):
             # Authentication
+            print('Getting token..')
             token = get_token_auth_header()
+            print('Verifying..')
             payload = verify_decode_jwt(token)
             # Authorization
+            print('Authorizing..')
             check_permissions(permission, payload)
 
             return f(payload, *args, **kwargs)
