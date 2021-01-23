@@ -114,7 +114,8 @@ def create_drink(jwt):
         if new_title is None or new_recipe is None:
             abort(400)
 
-        # Convert list to string.
+        # Build the new drink object and add it to the database.
+        # json.dumps() converts list to string.
         new_drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
         new_drink.insert()
 
